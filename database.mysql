@@ -1,0 +1,51 @@
+-- Crear BD
+CREATE DATABASE parkingsystem
+USE parkingsystem;
+
+-- Table Roles
+CREATE TABLE roles (
+idRol INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+nombreRol VARCHAR (50) NOT NULL UNIQUE COMMENT 'administrador, cajero, marcador',
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+-- Usamos INDEX para búsquedas por rol especifico
+INDEX indexNombre (nombreRol)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Roles del sistema: administrador, cajero, marcador';
+
+-- Table Usuarios
+CREATE TABLE usuarios (
+idUsuario INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+username VARCHAR(50) NOT NULL UNIQUE COMMENT 'Nombre de usuario único',
+email VARCHAR(100) NOT NULL UNIQUE COMMENT 'Email único',
+password VARCHAR(255) NOT NULL COMMENT 'Contraseña hash',
+nombreCompleto VARCHAR(150) NOT NULL COMMENT 'Nombre completo del usuario',
+rolId INT UNSIGNED NOT NULL COMMENT 'Relación con tabla roles',
+isActive TINYINT DEFAULT 1 COMMENT '1=activo, 0=inactivo',
+ultimoAccesso TIMESTAMP NULL DEFAULT NULL COMMENT 'Última vez que inició sesión',
+createAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+-- Garantizamos que rolId exista en tabla roles
+FOREIGN KEY (rolId) REFERENCES roles(idRol) ON UPDATE CASCADE,
+
+-- Usamos INDEX para búsquedas por username
+INDEX indexUsername (username),
+
+-- Usamos INDEX para búsquedas por email
+INDEX indexEmail (email),
+
+-- Usamos INDEX para búsquedas por rol
+INDEX indexRol (rolId),
+
+-- Usamos INDEX para filtrar usuarios activos-inactivos
+INDEX indexActive (isActive)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Usuarios del sistema y sus roles';
+
+-- Insertando roles existentes a la tabla Roles
+INSERT INTO roles (idRol, nombreRol) VALUES
+(1, 'administrador'),
+(2, 'cajero'),
+(3, 'marcador');
