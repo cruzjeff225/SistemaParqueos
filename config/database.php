@@ -8,7 +8,7 @@ if (session_status() == PHP_SESSION_NONE) {
 // Database configuration
 define ('DB_HOST', 'localhost');
 define ('DB_USER', 'root');
-define ('DB_PASS', 'root');
+define ('DB_PASS', '');
 define ('DB_NAME', 'parkingsystem');
 
 // Create database connection
@@ -20,7 +20,7 @@ function dbConnect() {
         die("Error de conexión: " . mysqli_connect_error());
     }
 
-    mysqli_set_charset($conn, "utfmb4");
+    mysqli_set_charset($conn, "utf8mb4");
     return $conn;
 }
 

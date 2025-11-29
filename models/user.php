@@ -14,7 +14,7 @@ class User
     {
         $email = mysqli_real_escape_string($this->conn, $email);
         // Query to find user by email
-        $query = "SELECT * FROM Usuarios WHERE email = '$email' LIMIT 1";
+        $query = "SELECT u.*, r.nombreRol FROM Usuarios u INNER JOIN Roles r On u.rolId = r.idRol WHERE u.email = '$email' LIMIT 1";
         $result = mysqli_query($this->conn, $query);
 
         if ($result && mysqli_num_rows($result) > 0) {
