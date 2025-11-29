@@ -72,15 +72,15 @@ function extLogin($userModel) {
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['username'] = $user['username'];
     $_SESSION['nombre'] = $user['nombreCompleto'];
-    $_SESSION['user_role'] = $user['rolId'];
+    $_SESSION['user_role'] = $user['nombreRol'];
     // Update last login
     $userModel->updateLastLogin($user['idUsuario']);
 
     // Define route based on role
     $routes = [
         'administrador' => 'dashboard.php',
-        'cashier' => 'dashboard.php',
-        'marker' => 'dashboard.php'
+        'cajero'        => 'dashboard.php',
+        'marcador'      => 'dashboard.php'
     ];
 
     $redirectTo = isset($routes[$user['rolId']]) ? $routes[$user['rolId']] : 'login.php';
