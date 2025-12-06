@@ -50,11 +50,19 @@ INSERT INTO roles (idRol, nombreRol) VALUES
 (2, 'cajero'),
 (3, 'marcador');
 
---Tabla tickets
 CREATE TABLE tickets (
     idTicket INT AUTO_INCREMENT PRIMARY KEY,
     numeroTicket VARCHAR(20) NOT NULL UNIQUE,
     fechaHoraEntrada DATETIME NOT NULL,
-    idUsuario INT NOT NULL,
-    FOREIGN KEY (idUsuario) REFERENCES Usuarios(idUsuario)
-);
+    idUsuario INT UNSIGNED NOT NULL,
+    
+    -- Campos de Salida y Cobro AÑADIDOS
+    fechaHoraSalida DATETIME NULL,
+    tiempoTotal VARCHAR(50) NULL,
+    costoTotal DECIMAL(10, 2) NULL,
+    montoRecibido DECIMAL(10, 2) NULL,
+    cambio DECIMAL(10, 2) NULL,
+    estado ENUM('pendiente', 'pagado') DEFAULT 'pendiente',
+    
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
