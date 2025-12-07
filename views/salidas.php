@@ -195,3 +195,5 @@ $usuario = $_SESSION['nombre'] ?? 'Cajero';
 </script>
 </body>
 </html>
+
+   // prueba 
