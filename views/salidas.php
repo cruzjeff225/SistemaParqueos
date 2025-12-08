@@ -1,18 +1,17 @@
 <?php
-// views/salidas.php
-
+//Zona horaria server
+date_default_timezone_set('America/El_Salvador');
 require_once '../config/database.php';
-// Asegura que el usuario esté logueado (asumiendo que esta función existe)
-if (!function_exists('redirectIfNotLoggedIn') || !redirectIfNotLoggedIn(false)) {
-    // Si la función no existe o devuelve falso, redirigimos manualmente
-    if (session_status() == PHP_SESSION_NONE) { session_start(); }
-    if (!isset($_SESSION['user_id'])) {
-        header("Location: login.php");
-        exit;
-    }
+
+if (session_status() == PHP_SESSION_NONE) { 
+    session_start(); 
 }
 
-// Datos del usuario en sesión
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
 $usuario = $_SESSION['nombre'] ?? 'Cajero';
 ?>
 <!DOCTYPE html>
@@ -22,178 +21,465 @@ $usuario = $_SESSION['nombre'] ?? 'Cajero';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salida de Vehículos y Cobro - Sistema Parqueo</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Alertify -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/default.min.css"/>
 
-    <style>
-        body { background-color: #f5f7fa; }
-        .card { border-radius: 15px; margin-bottom: 20px; }
-        .ticket-info p { margin: 5px 0; font-size: 1.1em; }
-        @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
-            /* Ocultar botones de imprimir en la impresión */
-            .no-print { display: none; }
-        }
-    </style>
 </head>
-<body>
-    <div class="container py-4">
+<body class="salida-page">
+    
+    <div class="container">
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold"><i class="fas fa-sign-out-alt"></i> Salida de Vehículos y Cobro</h3>
-            <div>
-                <span class="me-3"><i class="fas fa-user"></i> <?php echo $usuario; ?></span>
-                <a href="../controllers/authController.php" class="btn btn-danger btn-sm">Cerrar sesión</a>
+        <!-- Header -->
+        <header class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-sign-out-alt"></i>
+                Salida de Vehículos y Cobro
+            </h1>
+            <div class="page-header-actions">
+                <div class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span><?php echo htmlspecialchars($usuario); ?></span>
+                </div>
+                <a href="entrada.php" class="btn btn-outline-primary">
+                    <i class="fas fa-car-side"></i>
+                    Entrada
+                </a>
+                <a href="dashboard.php" class="btn btn-outline-primary">
+                    <i class="fas fa-th-large"></i>
+                    Dashboard
+                </a>
+                <a href="../controllers/authController.php" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesión
+                </a>
             </div>
-        </div>
+        </header>
 
-        <div class="card p-4">
-            <h5 class="fw-bold mb-3"><i class="fas fa-search"></i> Buscar Ticket</h5>
-            <form id="formBuscar">
-                <label for="numTicket" class="form-label">Número de Ticket:</label>
-                <input type="text" id="numTicket" class="form-control mb-3" required placeholder="Ingrese el NÚMERO completo (Ej: T-20251127-0001)">
-                <button type="submit" class="btn btn-primary">Buscar Ticket</button>
+        <!-- Search Card -->
+        <div class="search-card">
+            <div class="search-card-header">
+                <h2 class="search-card-title">
+                    <i class="fas fa-search"></i>
+                    Buscar Ticket
+                </h2>
+                <span class="method-indicator" id="methodIndicator">Búsqueda Rápida</span>
+            </div>
+
+            <!-- Toggle Method -->
+            <div class="search-method-toggle">
+                <button type="button" class="btn btn-outline-primary active" id="btnRapida" onclick="cambiarMetodo('rapida')">
+                    <i class="fas fa-bolt"></i>
+                    Búsqueda Rápida (4 dígitos)
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="btnCompleta" onclick="cambiarMetodo('completa')">
+                    <i class="fas fa-keyboard"></i>
+                    Búsqueda Completa
+                </button>
+            </div>
+
+            <!-- Fast Search Form -->
+            <form id="formBuscarRapida" class="search-form">
+                <div class="search-form-group">
+                    <label class="form-label">Número de Ticket</label>
+                    <div class="ticket-input-wrapper">
+                        <span class="ticket-prefix" id="ticketPrefix">T-<?php echo date('Ymd'); ?>-</span>
+                        <input 
+                            type="text" 
+                            id="digitosInput" 
+                            class="input-digits" 
+                            placeholder="0001"
+                            maxlength="4"
+                            pattern="\d{1,4}"
+                            required
+                            autofocus
+                        >
+                    </div>
+                    <div class="help-text">
+                        <i class="fas fa-info-circle"></i>
+                        Solo ingresa los últimos 4 dígitos del ticket
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-search btn-primary">
+                    <i class="fas fa-search"></i>
+                    BUSCAR
+                </button>
+            </form>
+
+            <!-- Complete Search Form -->
+            <form id="formBuscarCompleta" class="search-form" style="display: none;">
+                <div class="search-form-group">
+                    <label for="numTicketCompleto" class="form-label">Número de Ticket Completo</label>
+                    <input 
+                        type="text" 
+                        id="numTicketCompleto" 
+                        class="form-control" 
+                        placeholder="Ej: T-20251127-0001"
+                        pattern="T-\d{8}-\d{4}"
+                    >
+                    <div class="help-text">
+                        <i class="fas fa-info-circle"></i>
+                        Ingresa el número completo del ticket
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-search btn-primary">
+                    <i class="fas fa-search"></i>
+                    BUSCAR
+                </button>
             </form>
         </div>
 
-        <div id="cobro-area" class="card p-4 d-none">
-            <h5 class="fw-bold mb-3"><i class="fas fa-file-invoice-dollar"></i> Detalle de Cobro</h5>
-            </div>
+        <!-- Charge Area (Hidden) -->
+        <div id="cobro-area" class="d-none"></div>
 
-        <div class="card p-4 mt-4">
-            <h5 class="fw-bold mb-3"><i class="fas fa-clock"></i> Tickets activos pendientes</h5>
-            <div id="tablaActivos">Cargando...</div>
-        </div>
+        <!-- Active Tickets -->
+        <section class="tickets-section">
+            <div class="tickets-section-header">
+                <h3 class="tickets-section-title">
+                    <i class="fas fa-clock"></i>
+                    Tickets Activos Pendientes
+                </h3>
+            </div>
+            <div class="tickets-section-body">
+                <div class="table-responsive">
+                    <div id="tablaActivos">
+                        <div class="loading-state">
+                            <div class="loading-spinner"></div>
+                            <p>Cargando tickets...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </div>
 
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
 
-<script>
-    const TARIFA_POR_HORA = 2.00; // Tarifa base
+    <script>
+        const TARIFA_POR_HORA = 2.00;
+        let metodoActual = 'rapida';
 
-    // Función para recargar la tabla de activos
-    function cargarTicketsActivos() {
-        $.ajax({
-            url: "../controllers/ticketController.php",
-            type: "POST",
-            data: { action: "listar_activos" },
-            success: function(html) {
-                $("#tablaActivos").html(html);
-                // Adjuntar listener de click a los nuevos botones 'Cobrar'
-                $(".btn-cobrar").click(function() {
-                    let numero = $(this).data('numero');
-                    $("#numTicket").val(numero);
-                    $("#formBuscar").submit();
-                });
+        alertify.set('notifier', 'position', 'top-right');
+
+        // Cambiar método de búsqueda
+        function cambiarMetodo(metodo) {
+            metodoActual = metodo;
+            
+            if (metodo === 'rapida') {
+                $('#formBuscarRapida').show();
+                $('#formBuscarCompleta').hide();
+                $('#btnRapida').addClass('active');
+                $('#btnCompleta').removeClass('active');
+                $('#methodIndicator').text('Búsqueda Rápida');
+                $('#digitosInput').focus();
+            } else {
+                $('#formBuscarRapida').hide();
+                $('#formBuscarCompleta').show();
+                $('#btnCompleta').addClass('active');
+                $('#btnRapida').removeClass('active');
+                $('#methodIndicator').text('Búsqueda Completa');
+                $('#numTicketCompleto').focus();
+            }
+        }
+
+        // Auto-format inputs
+        $("#digitosInput").on('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 4);
+        });
+
+        $("#numTicketCompleto").on('input', function() {
+            let value = this.value.toUpperCase();
+            if (value && !value.startsWith('T-')) {
+                this.value = 'T-' + value.replace(/[^0-9-]/g, '');
+            } else {
+                this.value = value.replace(/[^T0-9-]/g, '');
             }
         });
-    }
 
-    // 1. LÓGICA DE BÚSQUEDA Y CÁLCULO (Activada por el formulario principal o botón "Cobrar")
-    $("#formBuscar").submit(function(e) {
-        e.preventDefault();
-        let numeroTicket = $("#numTicket").val();
-        $("#cobro-area").html('<p class="text-center"><i class="fas fa-spinner fa-spin"></i> Calculando...</p>').removeClass("d-none");
-
-        // Llamar al controlador para obtener los datos calculados
-        $.ajax({
-            url: "../controllers/ticketController.php",
-            type: "POST",
-            data: { 
-                action: "obtener_info_cobro", 
-                numeroTicket: numeroTicket, 
-                tarifa: TARIFA_POR_HORA 
-            },
-            dataType: "json",
-            success: function(res) {
-                if (res.success) {
-                    let data = res.data;
+        // Load active tickets
+        function cargarTicketsActivos() {
+            $.ajax({
+                url: "../controllers/ticketController.php",
+                type: "POST",
+                data: { action: "listar_activos" },
+                success: function(html) {
+                    $("#tablaActivos").html(html);
                     
-                    // Cumplimiento: Muestra Hora entrada, Hora salida, Tiempo total, Monto a pagar
-                    let html_cobro = `
-                        <div class="ticket-info">
-                            <p><strong>Número Ticket:</strong> ${data.numeroTicket}</p>
-                            <p><strong>Hora Entrada:</strong> ${data.fechaHoraEntrada}</p>
-                            <p><strong>Hora Salida:</strong> ${data.fechaHoraSalida}</p>
-                            <p><strong>Tiempo Estancia:</strong> ${data.tiempoTotal}</p>
-                        </div>
-                        <h4 class="text-danger mt-3">Total a Pagar: $${data.costoTotal}</h4>
+                    $(".btn-cobrar").click(function() {
+                        let numero = $(this).data('numero');
+                        let digitos = numero.split('-')[2];
                         
-                        <form id="formCobrar" class="mt-3">
-                            <input type="hidden" name="action" value="procesar_cobro">
-                            <input type="hidden" name="idTicket" value="${data.idTicket}">
-                            <input type="hidden" name="costoTotal" value="${data.costoTotal}">
-                            <input type="hidden" name="tiempoTotal" value="${data.tiempoTotal}">
-                            <input type="hidden" name="fechaHoraSalida" value="${data.fechaHoraSalida}">
-                            
-                            <label for="montoRecibido" class="form-label">Monto Recibido ($):</label>
-                            <input type="number" step="0.01" id="montoRecibido" name="montoRecibido" class="form-control mb-3" required min="${data.costoTotal}">
-                            <button type="submit" class="btn btn-success"><i class="fas fa-money-check-alt"></i> Procesar Pago</button>
-                        </form>
-                    `;
-                    $("#cobro-area").html(html_cobro);
-                } else {
-                    alertify.error(res.message);
+                        cambiarMetodo('rapida');
+                        $("#digitosInput").val(digitos);
+                        $("#formBuscarRapida").submit();
+                        
+                        $('html, body').animate({
+                            scrollTop: $(".search-card").offset().top - 20
+                        }, 500);
+                    });
+                },
+                error: function() {
+                    $("#tablaActivos").html(
+                        '<div class="empty-state">' +
+                        '<i class="fas fa-exclamation-circle"></i>' +
+                        '<p>Error al cargar tickets</p>' +
+                        '</div>'
+                    );
+                }
+            });
+        }
+
+        // Fast search
+        $("#formBuscarRapida").submit(function(e) {
+            e.preventDefault();
+            let digitos = $("#digitosInput").val().padStart(4, '0');
+            let fecha = '<?php echo date("Ymd"); ?>';
+            let numeroTicket = `T-${fecha}-${digitos}`;
+            buscarTicket(numeroTicket);
+        });
+
+        // Complete search
+        $("#formBuscarCompleta").submit(function(e) {
+            e.preventDefault();
+            let numeroTicket = $("#numTicketCompleto").val().trim();
+            if (!numeroTicket) {
+                alertify.error('Por favor ingresa un número de ticket');
+                return;
+            }
+            buscarTicket(numeroTicket);
+        });
+
+        // Unified search function
+        function buscarTicket(numeroTicket) {
+            $("#cobro-area").html(`
+                <div class="detail-card">
+                    <div class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>Calculando cobro...</p>
+                    </div>
+                </div>
+            `).removeClass("d-none");
+
+            $.ajax({
+                url: "../controllers/ticketController.php",
+                type: "POST",
+                data: { action: "obtener_info_cobro", numeroTicket: numeroTicket },
+                dataType: "json",
+                success: function(res) {
+                    if (res.success) {
+                        mostrarFormularioCobro(res.data);
+                        $('html, body').animate({
+                            scrollTop: $("#cobro-area").offset().top - 20
+                        }, 500);
+                    } else {
+                        alertify.error(res.message);
+                        $("#cobro-area").addClass("d-none");
+                    }
+                },
+                error: function() {
+                    alertify.error("Error al buscar el ticket");
                     $("#cobro-area").addClass("d-none");
                 }
-            },
-            error: function(xhr, status, error) {
-                alertify.error("Error en la comunicación con el servidor: " + error);
-                $("#cobro-area").addClass("d-none");
-            }
-        });
-    });
+            });
+        }
 
-    // 2. LÓGICA DE PROCESAMIENTO DE PAGO (Activada al enviar formCobrar)
-    $(document).on('submit', '#formCobrar', function(e) {
-        e.preventDefault();
-        let formData = $(this).serialize();
-
-        // Llamar al controlador para procesar el pago y el UPDATE
-        $.ajax({
-            url: "../controllers/ticketController.php",
-            type: "POST",
-            data: formData,
-            dataType: "json",
-            success: function(res) {
-                if (res.success) {
-                    // Cumplimiento: Muestra y permite generar/imprimir ticket final
-                    alertify.success(`Pago procesado! Cambio: $${res.data.cambio}`);
+        // Show charge form
+        function mostrarFormularioCobro(data) {
+            let html = `
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <h3 class="detail-card-title">Detalle del Ticket</h3>
+                    </div>
                     
-                    let ticket_final = `
-                        <div id="print-area" class="alert alert-success mt-3" role="alert">
-                            <h5 class="alert-heading fw-bold">✅ TICKET PAGADO</h5>
-                            <p><strong>Número:</strong> ${res.data.numeroTicket}</p>
-                            <hr>
-                            <p><strong>Entrada:</strong> ${res.data.fechaHoraEntrada}</p>
-                            <p><strong>Salida:</strong> ${res.data.fechaHoraSalida}</p>
-                            <p><strong>Tiempo:</strong> ${res.data.tiempoTotal}</p>
-                            <hr>
-                            <p class="mb-0"><strong>Total:</strong> $${res.data.costoTotal}</p>
-                            <p class="mb-0"><strong>Recibido:</strong> $${res.data.montoRecibido}</p>
-                            <p class="mb-0 text-danger"><strong>Cambio:</strong> $${res.data.cambio}</p>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-item-label">Número de Ticket</span>
+                            <span class="detail-item-value">${data.numeroTicket}</span>
                         </div>
-                        <button class="btn btn-sm btn-info mt-2 no-print" onclick="window.print()"><i class="fas fa-print"></i> Imprimir Recibo</button>
-                    `;
-                    $("#cobro-area").html(ticket_final);
-                    cargarTicketsActivos(); // Refrescar la tabla
-                } else {
-                    alertify.error(res.message);
-                }
-            }
-        });
-    });
+                        <div class="detail-item">
+                            <span class="detail-item-label">Tiempo Transcurrido</span>
+                            <span class="detail-item-value">${data.tiempoTotal}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">Hora de Entrada</span>
+                            <span class="detail-item-value">${new Date(data.fechaHoraEntrada).toLocaleString('es-SV')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">Hora de Salida</span>
+                            <span class="detail-item-value">${new Date(data.fechaHoraSalida).toLocaleString('es-SV')}</span>
+                        </div>
+                    </div>
 
-    // Cargar la tabla al iniciar
-    cargarTicketsActivos();
-</script>
+                    <div class="amount-highlight">
+                        <div class="amount-highlight-label">Monto a Pagar</div>
+                        <div class="amount-highlight-value">$${parseFloat(data.costoTotal).toFixed(2)}</div>
+                    </div>
+
+                    <form id="formCobrar" class="payment-form">
+                        <input type="hidden" name="action" value="procesar_cobro">
+                        <input type="hidden" name="idTicket" value="${data.idTicket}">
+                        <input type="hidden" name="costoTotal" value="${data.costoTotal}">
+                        <input type="hidden" name="tiempoTotal" value="${data.tiempoTotal}">
+                        <input type="hidden" name="fechaHoraSalida" value="${data.fechaHoraSalida}">
+                        
+                        <div class="payment-input-group">
+                            <label for="montoRecibido" class="form-label">
+                                <i class="fas fa-money-bill-wave"></i>
+                                Monto Recibido ($)
+                            </label>
+                            <input 
+                                type="number" 
+                                step="0.01" 
+                                id="montoRecibido" 
+                                name="montoRecibido" 
+                                class="form-control" 
+                                required 
+                                min="${data.costoTotal}"
+                                placeholder="0.00"
+                            >
+                        </div>
+                        
+                        <button type="submit" class="btn btn-process">
+                            <i class="fas fa-check-circle"></i>
+                            PROCESAR PAGO
+                        </button>
+                    </form>
+                </div>
+            `;
+            
+            $("#cobro-area").html(html);
+            setTimeout(() => $("#montoRecibido").focus(), 100);
+        }
+
+        // Process payment
+        $(document).on('submit', '#formCobrar', function(e) {
+            e.preventDefault();
+            
+            let formData = $(this).serialize();
+            
+            $(this).find('button[type="submit"]')
+                .prop('disabled', true)
+                .html('<i class="fas fa-spinner fa-spin"></i> Procesando...');
+
+            $.ajax({
+                url: "../controllers/ticketController.php",
+                type: "POST",
+                data: formData,
+                dataType: "json",
+                success: function(res) {
+                    if (res.success) {
+                        alertify.success('¡Pago procesado exitosamente!');
+                        mostrarRecibo(res.data);
+                        cargarTicketsActivos();
+                    } else {
+                        alertify.error(res.message);
+                        $("#formCobrar").find('button[type="submit"]')
+                            .prop('disabled', false)
+                            .html('<i class="fas fa-check-circle"></i> PROCESAR PAGO');
+                    }
+                },
+                error: function() {
+                    alertify.error("Error al procesar el pago");
+                    $("#formCobrar").find('button[type="submit"]')
+                        .prop('disabled', false)
+                        .html('<i class="fas fa-check-circle"></i> PROCESAR PAGO');
+                }
+            });
+        });
+
+        // Show receipt
+        function mostrarRecibo(data) {
+            let html = `
+                <div class="receipt-card">
+                    <div id="print-area">
+                        <div class="receipt-header">
+                            <div class="receipt-success-badge">
+                                <i class="fas fa-check-circle"></i>
+                                Pago Procesado
+                            </div>
+                            <h2 class="receipt-title">Recibo de Pago</h2>
+                            <p class="receipt-subtitle">Sistema de Parqueo</p>
+                            <p class="receipt-subtitle">${new Date().toLocaleString('es-SV')}</p>
+                        </div>
+
+                        <table class="receipt-table">
+                            <tr>
+                                <th>Ticket:</th>
+                                <td>${data.numeroTicket}</td>
+                            </tr>
+                            <tr>
+                                <th>Entrada:</th>
+                                <td>${new Date(data.fechaHoraEntrada).toLocaleString('es-SV')}</td>
+                            </tr>
+                            <tr>
+                                <th>Salida:</th>
+                                <td>${new Date(data.fechaHoraSalida).toLocaleString('es-SV')}</td>
+                            </tr>
+                            <tr>
+                                <th>Tiempo:</th>
+                                <td>${data.tiempoTotal}</td>
+                            </tr>
+                            <tr class="total-row">
+                                <th>Total:</th>
+                                <td>$${parseFloat(data.costoTotal).toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <th>Recibido:</th>
+                                <td>$${parseFloat(data.montoRecibido).toFixed(2)}</td>
+                            </tr>
+                            <tr class="cambio-row">
+                                <th>Cambio:</th>
+                                <td>$${parseFloat(data.cambio).toFixed(2)}</td>
+                            </tr>
+                        </table>
+
+                        <div class="receipt-footer">
+                            ¡Gracias por su visita!
+                        </div>
+                    </div>
+
+                    <div class="receipt-actions no-print">
+                        <button class="btn btn-primary" onclick="window.print()">
+                            <i class="fas fa-print"></i>
+                            Imprimir
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="nuevoTicket()">
+                            <i class="fas fa-plus"></i>
+                            Nuevo
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            $("#cobro-area").html(html);
+        }
+
+        // New ticket
+        function nuevoTicket() {
+            $("#cobro-area").addClass("d-none").html('');
+            $("#digitosInput").val('');
+            $("#numTicketCompleto").val('');
+            
+            if (metodoActual === 'rapida') {
+                $("#digitosInput").focus();
+            } else {
+                $("#numTicketCompleto").focus();
+            }
+        }
+
+        // Initial load
+        $(document).ready(function() {
+            cargarTicketsActivos();
+            setInterval(cargarTicketsActivos, 30000);
+        });
+    </script>
+
 </body>
 </html>
-
-   // prueba 

@@ -1,4 +1,6 @@
 <?php
+//Zona horaria server
+date_default_timezone_set('America/El_Salvador');
 require_once '../config/database.php';
 require_once '../models/Ticket.php';
 
