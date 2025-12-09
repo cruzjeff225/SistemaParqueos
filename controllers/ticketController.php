@@ -42,6 +42,14 @@ switch ($action) {
         listarActivos($ticketModel);
         break;
 
+    case 'obtener_estadisticas':
+        obtenerEstadisticas($ticketModel);
+        break;
+
+    case 'listar_ultimos_tickets':
+        listarUltimosTickets($ticketModel);
+        break;
+
     // --- NUEVAS ACCIONES DE COBRO ---
     case 'obtener_info_cobro':
         obtenerInfoCobro($ticketModel);
@@ -223,4 +231,80 @@ function replyJson($success, $message, $data = [])
         "data"    => $data
     ], JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+// Obtener estadísticas para el dashboard
+function obtenerEstadisticas($model)
+{
+    
+    $conn = $GLOBALS['conn'] ?? null;
+    if (!$conn) {
+        $conn = dbConnect();
+    }
+
+    // Total de entradas hoy
+    $queryEntradas = "SELECT COUNT(*) as total FROM tickets WHERE DATE(fechaHoraEntrada) = CURDATE()";
+    $resultEntradas = mysqli_query($conn, $queryEntradas);
+    $entradasHoy = mysqli_fetch_assoc($resultEntradas)['total'] ?? 0;
+
+    // Tickets pendientes
+    $queryPendientes = "SELECT COUNT(*) as total FROM tickets WHERE estado = 'pendiente' AND DATE(fechaHoraEntrada) = CURDATE()";
+    $resultPendientes = mysqli_query($conn, $queryPendientes);
+    $pendientes = mysqli_fetch_assoc($resultPendientes)['total'] ?? 0;
+
+    // Total cobrado hoy
+    $queryCobrado = "SELECT COALESCE(SUM(costoTotal), 0) as total FROM tickets WHERE estado = 'pagado' AND DATE(fechaHoraEntrada) = CURDATE()";
+    $resultCobrado = mysqli_query($conn, $queryCobrado);
+    $totalCobrado = mysqli_fetch_assoc($resultCobrado)['total'] ?? 0;
+
+    replyJson(true, "Estadísticas obtenidas", [
+        'entradasHoy' => (int)$entradasHoy,
+        'pendientes' => (int)$pendientes,
+        'totalCobrado' => (float)$totalCobrado
+    ]);
+}
+
+// Listar los últimos 10 tickets generados hoy
+function listarUltimosTickets($model)
+{
+    $conn = $GLOBALS['conn'] ?? null;
+    if (!$conn) {
+        $conn = dbConnect();
+    }
+
+    $query = "SELECT 
+                t.numeroTicket, 
+                t.fechaHoraEntrada, 
+                t.fechaHoraSalida, 
+                t.estado,
+                u.nombreCompleto
+              FROM tickets t
+              LEFT JOIN usuarios u ON t.idUsuario = u.idUsuario
+              WHERE DATE(t.fechaHoraEntrada) = CURDATE()
+              ORDER BY t.idTicket DESC
+              LIMIT 10";
+
+    $result = mysqli_query($conn, $query);
+
+    if (!$result || mysqli_num_rows($result) === 0) {
+        echo '<tr><td colspan="4" class="text-center py-4 text-muted">No hay tickets registrados hoy</td></tr>';
+        return;
+    }
+
+    while ($row = mysqli_fetch_assoc($result)) {
+        $estado = $row['estado'] === 'pagado' 
+            ? '<span class="badge bg-success">Pagado</span>' 
+            : '<span class="badge bg-warning">Pendiente</span>';
+
+        $salida = $row['fechaHoraSalida'] ?? '—';
+
+        echo "
+        <tr>
+            <td><strong>{$row['numeroTicket']}</strong></td>
+            <td>" . date('H:i:s', strtotime($row['fechaHoraEntrada'])) . "</td>
+            <td>" . ($salida !== '—' ? date('H:i:s', strtotime($salida)) : '—') . "</td>
+            <td>{$estado}</td>
+        </tr>
+        ";
+    }
 }
