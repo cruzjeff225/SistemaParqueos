@@ -1,6 +1,5 @@
 <?php
 require_once '../config/database.php';
-//Zona horaria server
 date_default_timezone_set('America/El_Salvador');
 
 if (session_status() == PHP_SESSION_NONE) { 
@@ -14,17 +13,14 @@ if (!isset($_SESSION['user_id'])) {
 
 $usuario = $_SESSION['nombre'] ?? 'Cajero';
 
-// Variables para el header
 $pageTitle = 'Salida de Vehículos - Sistema de Parqueo';
 $bodyClass = 'bg-light';
 
-// Incluir header
 include 'includes/header.php';
 ?>
 
 <div class="container-fluid">
     
-    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="h4 mb-1 fw-bold text-dark">
@@ -35,7 +31,6 @@ include 'includes/header.php';
         </div>
     </div>
 
-    <!-- Search Card -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
@@ -50,7 +45,6 @@ include 'includes/header.php';
                 </div>
                 <div class="card-body">
                     
-                    <!-- Method Toggle -->
                     <div class="btn-group w-100 mb-4" role="group">
                         <input type="radio" class="btn-check" name="searchMethod" id="btnRapida" checked>
                         <label class="btn btn-outline-primary" for="btnRapida" onclick="cambiarMetodo('rapida')">
@@ -65,7 +59,6 @@ include 'includes/header.php';
                         </label>
                     </div>
 
-                    <!-- Fast Search Form -->
                     <form id="formBuscarRapida" class="row g-3 align-items-end">
                         <div class="col-md-8">
                             <label class="form-label fw-semibold text-dark">
@@ -100,7 +93,6 @@ include 'includes/header.php';
                         </div>
                     </form>
 
-                    <!-- Complete Search Form -->
                     <form id="formBuscarCompleta" class="row g-3 align-items-end" style="display: none;">
                         <div class="col-md-8">
                             <label for="numTicketCompleto" class="form-label fw-semibold text-dark">
@@ -131,10 +123,8 @@ include 'includes/header.php';
         </div>
     </div>
 
-    <!-- Charge Area (Hidden) -->
     <div id="cobro-area" class="d-none"></div>
 
-    <!-- Active Tickets -->
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
@@ -165,13 +155,52 @@ include 'includes/header.php';
 
 </div>
 
+<style>
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #print-area, #print-area * {
+        visibility: visible;
+    }
+    #print-area {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        transform: translateX(-50%);
+        width: 80mm;
+        max-width: 100%;
+        padding: 5mm;
+    }
+    .no-print {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        page-break-after: avoid;
+    }
+    h3 { font-size: 1.3rem !important; margin-bottom: 0.3rem !important; }
+    h6 { font-size: 0.65rem !important; margin-bottom: 0.2rem !important; }
+    p, small { font-size: 0.75rem !important; line-height: 1.2 !important; }
+    .mb-1 { margin-bottom: 0.15rem !important; }
+    .mb-2 { margin-bottom: 0.3rem !important; }
+    .mb-3 { margin-bottom: 0.5rem !important; }
+    .py-2 { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; }
+    .pt-2 { padding-top: 0.3rem !important; }
+    .alert { padding: 0.4rem !important; margin-bottom: 0.5rem !important; }
+    table { margin-bottom: 0.3rem !important; }
+    .border-top { padding-top: 0.3rem !important; }
+}
+</style>
+
 <?php
 $pageScripts = "
 <script>
     const TARIFA_POR_HORA = 2.00;
     let metodoActual = 'rapida';
+    const nombreUsuario = '" . htmlspecialchars($usuario) . "';
 
-    // Cambiar método
     function cambiarMetodo(metodo) {
         metodoActual = metodo;
         
@@ -188,7 +217,6 @@ $pageScripts = "
         }
     }
 
-    // Auto-format
     $('#digitosInput').on('input', function() {
         this.value = this.value.replace(/\D/g, '').slice(0, 4);
     });
@@ -202,7 +230,6 @@ $pageScripts = "
         }
     });
 
-    // Load active tickets
     function cargarTicketsActivos() {
         $.ajax({
             url: '../controllers/ticketController.php',
@@ -211,7 +238,6 @@ $pageScripts = "
             success: function(html) {
                 $('#tablaActivos').html(html);
                 
-                // Contar tickets
                 const count = $('#tablaActivos table tbody tr').length;
                 $('#badge-count').text(count > 0 ? count : '0');
                 
@@ -234,13 +260,11 @@ $pageScripts = "
         });
     }
 
-    // Search forms
     $('#formBuscarRapida').submit(function(e) {
         e.preventDefault();
         let digitos = $('#digitosInput').val().padStart(4, '0');
         let fecha = '" . date('Ymd') . "';
         let numeroTicket = 'T-' + fecha + '-' + digitos;
-
         buscarTicket(numeroTicket);
     });
 
@@ -284,27 +308,26 @@ $pageScripts = "
     }
 
     function mostrarFormularioCobro(data) {
-        let html = '<div class=\"row mb-4\"><div class=\"col-12\"><div class=\"card border-0 border-start border-primary border-4 shadow-sm\">' +
-            '<div class=\"card-header bg-white border-0 py-3\">' +
-            '<h5 class=\"mb-0 fw-bold\"><i class=\"fas fa-file-invoice-dollar text-primary me-2\"></i>Detalle del Ticket</h5></div>' +
+        let html = '<div class=\"row mb-4\"><div class=\"col-12\"><div class=\"card border-0 shadow-sm\">' +
             '<div class=\"card-body\">' +
+            '<h5 class=\"mb-4 fw-bold\"><i class=\"fas fa-file-invoice-dollar text-primary me-2\"></i>Detalle del Ticket</h5>' +
             
             '<div class=\"row g-3 mb-4\">' +
-            '<div class=\"col-md-3\"><div class=\"p-3 bg-light rounded\">' +
-            '<small class=\"text-muted text-uppercase d-block mb-1\" style=\"font-size: 0.7rem; letter-spacing: 0.5px;\">Número</small>' +
+            '<div class=\"col-md-3\"><div class=\"p-3 bg-light rounded text-center\">' +
+            '<small class=\"text-muted text-uppercase d-block mb-1\" style=\"font-size: 0.7rem;\">Número</small>' +
             '<strong class=\"d-block fs-6\">' + data.numeroTicket + '</strong></div></div>' +
             
-            '<div class=\"col-md-3\"><div class=\"p-3 bg-light rounded\">' +
-            '<small class=\"text-muted text-uppercase d-block mb-1\" style=\"font-size: 0.7rem; letter-spacing: 0.5px;\">Tiempo</small>' +
+            '<div class=\"col-md-3\"><div class=\"p-3 bg-light rounded text-center\">' +
+            '<small class=\"text-muted text-uppercase d-block mb-1\" style=\"font-size: 0.7rem;\">Tiempo</small>' +
             '<strong class=\"d-block fs-6\">' + data.tiempoTotal + '</strong></div></div>' +
             
-            '<div class=\"col-md-3\"><div class=\"p-3 bg-light rounded\">' +
-            '<small class=\"text-muted text-uppercase d-block mb-1\" style=\"font-size: 0.7rem; letter-spacing: 0.5px;\">Entrada</small>' +
-            '<strong class=\"d-block fs-6\">' + new Date(data.fechaHoraEntrada).toLocaleTimeString('es-SV') + '</strong></div></div>' +
+            '<div class=\"col-md-3\"><div class=\"p-3 bg-light rounded text-center\">' +
+            '<small class=\"text-muted text-uppercase d-block mb-1\" style=\"font-size: 0.7rem;\">Entrada</small>' +
+            '<strong class=\"d-block fs-6\">' + formatearHora(data.fechaHoraEntrada) + '</strong></div></div>' +
             
-            '<div class=\"col-md-3\"><div class=\"p-3 bg-light rounded\">' +
-            '<small class=\"text-muted text-uppercase d-block mb-1\" style=\"font-size: 0.7rem; letter-spacing: 0.5px;\">Salida</small>' +
-            '<strong class=\"d-block fs-6\">' + new Date(data.fechaHoraSalida).toLocaleTimeString('es-SV') + '</strong></div></div>' +
+            '<div class=\"col-md-3\"><div class=\"p-3 bg-light rounded text-center\">' +
+            '<small class=\"text-muted text-uppercase d-block mb-1\" style=\"font-size: 0.7rem;\">Salida</small>' +
+            '<strong class=\"d-block fs-6\">' + formatearHora(data.fechaHoraSalida) + '</strong></div></div>' +
             '</div>' +
             
             '<div class=\"alert alert-primary border-0 shadow-sm text-center py-4 mb-4\">' +
@@ -317,6 +340,8 @@ $pageScripts = "
             '<input type=\"hidden\" name=\"costoTotal\" value=\"' + data.costoTotal + '\">' +
             '<input type=\"hidden\" name=\"tiempoTotal\" value=\"' + data.tiempoTotal + '\">' +
             '<input type=\"hidden\" name=\"fechaHoraSalida\" value=\"' + data.fechaHoraSalida + '\">' +
+            '<input type=\"hidden\" name=\"numeroTicket\" value=\"' + data.numeroTicket + '\">' +
+            '<input type=\"hidden\" name=\"fechaHoraEntrada\" value=\"' + data.fechaHoraEntrada + '\">' +
             
             '<div class=\"mb-4\"><label class=\"form-label fw-semibold text-dark\">' +
             '<i class=\"fas fa-money-bill-wave text-success me-2\"></i>Monto Recibido ($)</label>' +
@@ -345,7 +370,11 @@ $pageScripts = "
             success: function(res) {
                 if (res.success) {
                     alertify.success('¡Pago procesado exitosamente!');
-                    mostrarRecibo(res.data);
+                    let datosRecibo = $.extend({}, res.data, {
+                        numeroTicket: $('#formCobrar input[name=\"numeroTicket\"]').val(),
+                        fechaHoraEntrada: $('#formCobrar input[name=\"fechaHoraEntrada\"]').val()
+                    });
+                    mostrarRecibo(datosRecibo);
                     cargarTicketsActivos();
                 } else {
                     alertify.error(res.message);
@@ -357,28 +386,50 @@ $pageScripts = "
     });
 
     function mostrarRecibo(data) {
-        let html = '<div class=\"row mb-4\"><div class=\"col-12\"><div class=\"card border-0 border-start border-success border-4 shadow-sm\">' +
-            '<div id=\"print-area\" class=\"card-body\">' +
+        const ahora = new Date();
+        const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const fechaFormateada = ahora.toLocaleDateString('es-SV', opciones) + ' - ' + formatearHora(data.fechaHoraSalida);
+        
+        let html = '<div class=\"row mb-4\"><div class=\"col-12\"><div class=\"card border-0 shadow-sm\">' +
+            '<div id=\"print-area\" class=\"card-body p-4\">' +
             
-            '<div class=\"text-center mb-4\">' +
-            '<div class=\"d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle mb-3\" style=\"width: 80px; height: 80px;\">' +
-            '<i class=\"fas fa-check-circle text-success\" style=\"font-size: 3rem;\"></i></div>' +
-            '<h4 class=\"fw-bold text-success mb-2\">¡Pago Procesado Exitosamente!</h4>' +
-            '<p class=\"text-muted mb-0\">Sistema de Parqueo</p>' +
-            '<small class=\"text-muted\">' + new Date().toLocaleString('es-SV') + '</small></div>' +
+            '<div class=\"text-center mb-3\">' +
+            '<h6 class=\"text-muted text-uppercase mb-2\" style=\"font-size: 0.7rem; letter-spacing: 1px;\">Sistema de Parqueo</h6>' +
+            '<h3 class=\"fw-bold mb-1\">RECIBO DE PAGO</h3>' +
+            '<p class=\"text-muted mb-0\" style=\"font-size: 0.85rem;\">' + fechaFormateada + '</p></div>' +
             
-            '<div class=\"table-responsive\">' +
-            '<table class=\"table table-borderless\">' +
-            '<tr class=\"border-bottom\"><th class=\"text-muted py-3\">Ticket:</th><td class=\"text-end py-3 fw-semibold\">' + data.numeroTicket + '</td></tr>' +
-            '<tr class=\"border-bottom\"><th class=\"text-muted py-3\">Entrada:</th><td class=\"text-end py-3\">' + new Date(data.fechaHoraEntrada).toLocaleString('es-SV') + '</td></tr>' +
-            '<tr class=\"border-bottom\"><th class=\"text-muted py-3\">Salida:</th><td class=\"text-end py-3\">' + new Date(data.fechaHoraSalida).toLocaleString('es-SV') + '</td></tr>' +
-            '<tr class=\"border-bottom\"><th class=\"text-muted py-3\">Tiempo:</th><td class=\"text-end py-3\">' + data.tiempoTotal + '</td></tr>' +
-            '<tr class=\"border-bottom bg-light\"><th class=\"py-3 fw-bold\">Total:</th><td class=\"text-end py-3 fw-bold fs-5\">$' + parseFloat(data.costoTotal).toFixed(2) + '</td></tr>' +
-            '<tr class=\"border-bottom\"><th class=\"text-muted py-3\">Recibido:</th><td class=\"text-end py-3\">$' + parseFloat(data.montoRecibido).toFixed(2) + '</td></tr>' +
-            '<tr class=\"bg-success bg-opacity-10\"><th class=\"py-3 text-success fw-bold\">Cambio:</th><td class=\"text-end py-3 text-success fw-bold fs-4\">$' + parseFloat(data.cambio).toFixed(2) + '</td></tr>' +
-            '</table></div>' +
+            '<div class=\"row mb-2\">' +
+            '<div class=\"col-6\"><small class=\"text-muted text-uppercase d-block\" style=\"font-size: 0.65rem;\">Ticket</small>' +
+            '<p class=\"mb-0 fw-semibold\" style=\"font-size: 0.9rem;\">' + data.numeroTicket + '</p></div>' +
+            '<div class=\"col-6 text-end\"><small class=\"text-muted text-uppercase d-block\" style=\"font-size: 0.65rem;\">Tiempo Total</small>' +
+            '<p class=\"mb-0 fw-semibold\" style=\"font-size: 0.9rem;\">' + data.tiempoTotal + '</p></div>' +
+            '</div>' +
             
-            '<p class=\"text-center text-muted mt-4 mb-0\">¡Gracias por su visita!</p></div>' +
+            '<div class=\"border-top border-bottom py-2 mb-2\">' +
+            '<div class=\"row\">' +
+            '<div class=\"col-6\"><small class=\"text-muted text-uppercase d-block\" style=\"font-size: 0.65rem;\">Entrada</small>' +
+            '<p class=\"mb-0\" style=\"font-size: 0.85rem;\">' + formatearFechaCompleta(data.fechaHoraEntrada) + '</p></div>' +
+            '<div class=\"col-6 text-end\"><small class=\"text-muted text-uppercase d-block\" style=\"font-size: 0.65rem;\">Salida</small>' +
+            '<p class=\"mb-0\" style=\"font-size: 0.85rem;\">' + formatearFechaCompleta(data.fechaHoraSalida) + '</p></div>' +
+            '</div></div>' +
+            
+            '<table class=\"table table-sm table-borderless mb-2\">' +
+            '<tr><td class=\"text-muted\">Subtotal:</td><td class=\"text-end fw-semibold\">$' + parseFloat(data.costoTotal).toFixed(2) + '</td></tr>' +
+            '<tr><td class=\"text-muted\">Recibido:</td><td class=\"text-end fw-semibold\">$' + parseFloat(data.montoRecibido).toFixed(2) + '</td></tr>' +
+            '<tr class=\"border-top\"><td class=\"fw-bold pt-2\">Cambio:</td><td class=\"text-end fw-bold text-success pt-2\" style=\"font-size: 1.25rem;\">$' + parseFloat(data.cambio).toFixed(2) + '</td></tr>' +
+            '</table>' +
+            
+            '<div class=\"alert alert-info border-0 mb-3 py-2\">' +
+            '<div class=\"d-flex align-items-start\">' +
+            '<i class=\"fas fa-info-circle me-2 mt-1\" style=\"font-size: 0.9rem;\"></i>' +
+            '<div style=\"font-size: 0.8rem;\">' +
+            '<p class=\"mb-0\"><strong>Tarifa:</strong> $2.00 por hora o fracción</p>' +
+            '</div></div></div>' +
+            
+            '<div class=\"text-center text-muted border-top pt-2\" style=\"font-size: 0.8rem;\">' +
+            '<p class=\"mb-1\">Atendido por: <strong>' + nombreUsuario + '</strong></p>' +
+            '<p class=\"mb-0\">¡Gracias por su visita!</p></div>' +
+            '</div>' +
             
             '<div class=\"card-footer bg-white border-0 no-print\">' +
             '<div class=\"row g-2\">' +
@@ -388,6 +439,22 @@ $pageScripts = "
             '<i class=\"fas fa-plus me-2\"></i>Nuevo</button></div>' +
             '</div></div></div></div></div>';
         $('#cobro-area').html(html);
+    }
+
+    function formatearHora(fechaHora) {
+        const fecha = new Date(fechaHora);
+        return fecha.toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function formatearFechaCompleta(fechaHora) {
+        const fecha = new Date(fechaHora);
+        return fecha.toLocaleString('es-SV', { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit',
+            hour: '2-digit', 
+            minute: '2-digit'
+        });
     }
 
     function nuevoTicket() {

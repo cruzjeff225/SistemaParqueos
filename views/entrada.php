@@ -5,17 +5,14 @@ redirectIfNotLoggedIn();
 $usuario = $_SESSION['nombre'];
 $rol = $_SESSION['user_role'];
 
-// Variables para el header
 $pageTitle = 'Entrada de Vehículos - Sistema de Parqueo';
 $bodyClass = 'bg-light';
 
-// Incluir header
 include 'includes/header.php';
 ?>
 
 <div class="container-fluid">
     
-    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="h4 mb-1 fw-bold text-dark">
@@ -26,7 +23,6 @@ include 'includes/header.php';
         </div>
     </div>
 
-    <!-- Generate Ticket Card -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
@@ -47,53 +43,42 @@ include 'includes/header.php';
         </div>
     </div>
 
-    <!-- Ticket Info (Hidden by default) -->
     <div class="row mb-4 d-none" id="ticket-info">
         <div class="col-12">
-            <div class="card border-0 border-start border-success border-4 shadow-sm">
-                <div id="print-area-entrada" class="card-body">
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="bg-success bg-opacity-25 rounded-circle p-2 me-3">
-                            <i class="fas fa-check-circle text-success fs-3"></i>
-                        </div>
-                        <div>
-                            <h5 class="mb-0 fw-bold text-success">¡Ticket Generado Exitosamente!</h5>
-                            <small class="text-muted">El vehículo ha sido registrado en el sistema</small>
-                        </div>
-                    </div>
+            <div class="card border-0 shadow-sm">
+                <div id="print-area-entrada" class="card-body p-4">
                     
-                    <div class="text-center mb-4">
+                    <div class="text-center mb-3">
                         <h6 class="text-muted text-uppercase mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">Sistema de Parqueo</h6>
                         <h3 class="fw-bold mb-1">TICKET DE ENTRADA</h3>
-                        <p class="text-muted mb-0" id="ticket-fecha-completa">-</p>
+                        <p class="text-muted mb-0" style="font-size: 0.85rem;" id="ticket-fecha-completa">-</p>
                     </div>
 
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <div class="bg-light rounded p-3 border">
-                                <small class="text-muted text-uppercase d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Número de Ticket</small>
-                                <h4 class="mb-0 fw-bold text-dark" id="ticket-num">-</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="bg-light rounded p-3 border">
-                                <small class="text-muted text-uppercase d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Hora de Entrada</small>
-                                <h4 class="mb-0 fw-bold text-dark" id="ticket-hora">-</h4>
-                            </div>
+                    <div class="mb-3">
+                        <div class="bg-light rounded p-3 border text-center">
+                            <small class="text-muted text-uppercase d-block mb-2" style="font-size: 0.65rem; letter-spacing: 0.5px;">Número de Ticket</small>
+                            <h5 class="mb-0 fw-bold text-dark" style="font-size: 1rem;" id="ticket-num">-</h5>
                         </div>
                     </div>
 
-                    <div class="alert alert-info border-0 mb-4">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <div class="small">
-                                <strong>Tarifa:</strong> $2.00 por hora o fracción<br>
-                                <strong>Importante:</strong> Conserve este ticket para su salida
+                    <div class="mb-3">
+                        <div class="bg-light rounded p-3 border text-center">
+                            <small class="text-muted text-uppercase d-block mb-2" style="font-size: 0.65rem; letter-spacing: 0.5px;">Hora de Entrada</small>
+                            <h5 class="mb-0 fw-bold text-dark" style="font-size: 1rem;" id="ticket-hora">-</h5>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info border-0 mb-3 py-2">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-info-circle me-2 mt-1" style="font-size: 0.9rem;"></i>
+                            <div style="font-size: 0.8rem;">
+                                <p class="mb-1"><strong>Tarifa:</strong> $2.00 por hora o fracción</p>
+                                <p class="mb-0"><strong>Importante:</strong> Conserve este ticket para su salida</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="text-center text-muted small">
+                    <div class="text-center text-muted border-top pt-2" style="font-size: 0.8rem;">
                         <p class="mb-1">Atendido por: <strong><?php echo htmlspecialchars($usuario); ?></strong></p>
                         <p class="mb-0">¡Gracias por su visita!</p>
                     </div>
@@ -119,7 +104,6 @@ include 'includes/header.php';
         </div>
     </div>
 
-    <!-- Active Tickets -->
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
@@ -160,22 +144,40 @@ include 'includes/header.php';
     }
     #print-area-entrada {
         position: absolute;
-        left: 0;
+        left: 50%;
         top: 0;
-        width: 100%;
-        padding: 20px;
+        transform: translateX(-50%);
+        width: 80mm;
+        max-width: 100%;
+        padding: 5mm;
     }
     .no-print {
         display: none !important;
     }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        page-break-after: avoid;
+    }
+    h3 { font-size: 1.3rem !important; margin-bottom: 0.3rem !important; }
+    h5 { font-size: 0.9rem !important; }
+    h6 { font-size: 0.65rem !important; margin-bottom: 0.2rem !important; }
+    p, small { font-size: 0.75rem !important; line-height: 1.2 !important; }
+    .mb-1 { margin-bottom: 0.15rem !important; }
+    .mb-2 { margin-bottom: 0.3rem !important; }
+    .mb-3 { margin-bottom: 0.5rem !important; }
+    .g-2 { gap: 0.3rem !important; }
+    .py-2 { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; }
+    .pt-2 { padding-top: 0.3rem !important; }
+    .p-3 { padding: 0.5rem !important; }
+    .alert { padding: 0.4rem !important; margin-bottom: 0.5rem !important; }
+    .border-top { padding-top: 0.3rem !important; }
 }
 </style>
 
 <?php
-// Scripts
 $pageScripts = "
 <script>
-    // Generar ticket
     $('#btnGenerar').click(function() {
         alertify.confirm(
             'Confirmar Generación',
@@ -195,28 +197,23 @@ $pageScripts = "
                         if (res.success) {
                             alertify.success('¡Ticket generado exitosamente!');
                             
-                            // Mostrar info del ticket
                             $('#ticket-num').text(res.data.numero);
                             $('#ticket-hora').text(res.data.hora);
                             
-                            // Formatear fecha completa
-                            const fecha = new Date(res.data.fecha);
+                            const ahora = new Date();
                             const opciones = { 
                                 weekday: 'long', 
                                 year: 'numeric', 
                                 month: 'long', 
                                 day: 'numeric' 
                             };
-                            $('#ticket-fecha-completa').text(
-                                fecha.toLocaleDateString('es-SV', opciones) + ' - ' + res.data.hora
-                            );
+                            const fechaFormateada = ahora.toLocaleDateString('es-SV', opciones);
+                            $('#ticket-fecha-completa').text(fechaFormateada + ' - ' + res.data.hora);
                             
                             $('#ticket-info').removeClass('d-none');
                             
-                            // Recargar tabla
                             cargarTicketsActivos();
                             
-                            // Scroll al ticket generado
                             $('html, body').animate({
                                 scrollTop: $('#ticket-info').offset().top - 100
                             }, 500);
@@ -238,18 +235,15 @@ $pageScripts = "
         ).set('labels', {ok:'Sí, Generar', cancel:'Cancelar'});
     });
 
-    // Imprimir ticket de entrada
     function imprimirTicketEntrada() {
         window.print();
     }
 
-    // Cerrar ticket
     function cerrarTicket() {
         $('#ticket-info').addClass('d-none');
         $('html, body').animate({scrollTop: 0}, 500);
     }
 
-    // Cargar tickets activos
     function cargarTicketsActivos() {
         $.ajax({
             url: '../controllers/ticketController.php',
@@ -258,7 +252,6 @@ $pageScripts = "
             success: function(html) {
                 $('#tablaActivos').html(html);
                 
-                // Contar tickets y actualizar badge
                 const count = $('#tablaActivos table tbody tr').length;
                 $('#badge-count').text(count > 0 ? count : '0');
             },
@@ -273,16 +266,12 @@ $pageScripts = "
         });
     }
 
-    // Cargar al iniciar
     $(document).ready(function() {
         cargarTicketsActivos();
-        
-        // Actualizar cada 30 segundos
         setInterval(cargarTicketsActivos, 30000);
     });
 </script>
 ";
 
-// Incluir footer
 include 'includes/footer.php';
 ?>
