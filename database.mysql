@@ -1,62 +1,57 @@
 -- Crear BD
-CREATE DATABASE parkingsystem
+CREATE DATABASE IF NOT EXISTS parkingsystem;
 USE parkingsystem;
 
 -- Table Roles
-CREATE TABLE roles (
-idRol INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-nombreRol VARCHAR (50) NOT NULL UNIQUE COMMENT 'administrador, cajero, marcador',
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+CREATE TABLE IF NOT EXISTS roles (
+    idRol INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombreRol VARCHAR (50) NOT NULL UNIQUE COMMENT 'administrador, cajero, marcador',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
--- Usamos INDEX para búsquedas por rol especifico
-INDEX indexNombre (nombreRol)
+    -- Usamos INDEX para búsquedas por rol especifico
+    INDEX indexNombre (nombreRol)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Roles del sistema: administrador, cajero, marcador';
 
 -- Table Usuarios
-CREATE TABLE usuarios (
-idUsuario INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-username VARCHAR(50) NOT NULL UNIQUE COMMENT 'Nombre de usuario único',
-email VARCHAR(100) NOT NULL UNIQUE COMMENT 'Email único',
-password VARCHAR(255) NOT NULL COMMENT 'Contraseña hash',
-nombreCompleto VARCHAR(150) NOT NULL COMMENT 'Nombre completo del usuario',
-rolId INT UNSIGNED NOT NULL COMMENT 'Relación con tabla roles',
-isActive TINYINT DEFAULT 1 COMMENT '1=activo, 0=inactivo',
-ultimoAccesso TIMESTAMP NULL DEFAULT NULL COMMENT 'Última vez que inició sesión',
-createAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+CREATE TABLE IF NOT EXISTS usuarios (
+    idUsuario INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE COMMENT 'Nombre de usuario único',
+    email VARCHAR(100) NOT NULL UNIQUE COMMENT 'Email único',
+    password VARCHAR(255) NOT NULL COMMENT 'Contraseña hash MD5',
+    nombreCompleto VARCHAR(150) NOT NULL COMMENT 'Nombre completo del usuario',
+    rolId INT UNSIGNED NOT NULL COMMENT 'Relación con tabla roles',
+    isActive TINYINT DEFAULT 1 COMMENT '1=activo, 0=inactivo',
+    ultimoAcceso TIMESTAMP NULL DEFAULT NULL COMMENT 'Última vez que inició sesión',
+    createAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
--- Garantizamos que rolId exista en tabla roles
-FOREIGN KEY (rolId) REFERENCES roles(idRol) ON UPDATE CASCADE,
+    -- Garantizamos que rolId exista en tabla roles
+    FOREIGN KEY (rolId) REFERENCES roles(idRol) ON UPDATE CASCADE,
 
--- Usamos INDEX para búsquedas por username
-INDEX indexUsername (username),
+    -- Usamos INDEX para búsquedas por username
+    INDEX indexUsername (username),
 
--- Usamos INDEX para búsquedas por email
-INDEX indexEmail (email),
+    -- Usamos INDEX para búsquedas por email
+    INDEX indexEmail (email),
 
--- Usamos INDEX para búsquedas por rol
-INDEX indexRol (rolId),
+    -- Usamos INDEX para búsquedas por rol
+    INDEX indexRol (rolId),
 
--- Usamos INDEX para filtrar usuarios activos-inactivos
-INDEX indexActive (isActive)
+    -- Usamos INDEX para filtrar usuarios activos-inactivos
+    INDEX indexActive (isActive)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Usuarios del sistema y sus roles';
 
--- Insertando roles existentes a la tabla Roles
-INSERT INTO roles (idRol, nombreRol) VALUES
-(1, 'administrador'),
-(2, 'cajero'),
-(3, 'marcador');
-
-CREATE TABLE tickets (
+-- Table Tickets
+CREATE TABLE IF NOT EXISTS tickets (
     idTicket INT AUTO_INCREMENT PRIMARY KEY,
     numeroTicket VARCHAR(20) NOT NULL UNIQUE,
     fechaHoraEntrada DATETIME NOT NULL,
     idUsuario INT UNSIGNED NOT NULL,
     
-    -- Campos de Salida y Cobro AÑADIDOS
+    -- Campos de Salida y Cobro
     fechaHoraSalida DATETIME NULL,
     tiempoTotal VARCHAR(50) NULL,
     costoTotal DECIMAL(10, 2) NULL,
@@ -66,3 +61,10 @@ CREATE TABLE tickets (
     
     FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insertando roles
+INSERT INTO roles (idRol, nombreRol) VALUES
+(1, 'administrador'),
+(2, 'cajero'),
+(3, 'marcador')
+ON DUPLICATE KEY UPDATE nombreRol = VALUES(nombreRol);

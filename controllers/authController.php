@@ -2,9 +2,20 @@
 require_once '../config/database.php';
 require_once '../models/user.php';
 
+// Iniciar sesión si no está iniciada
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Verificar si la acción viene por GET (para logout)
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'logout') {
+    extLogout();
+}
+
 // Verify POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    replyJson(false, 'Método no permitido.');
+    header('Location: ../views/login.php');
+    exit;
 }
 
 // Get action
@@ -56,8 +67,9 @@ function extLogin($userModel) {
         replyJson(false, 'Correo electrónico o contraseña incorrectos.');
     }
 
-    // Verify password
-    if (!password_verify($password, $user['password'])) {
+    // Verify password with MD5
+    $passwordMD5 = md5($password);
+    if ($passwordMD5 !== $user['password']) {
         // Invalid password
         replyJson(false, 'Correo electrónico o contraseña incorrectos.');
     }
@@ -73,20 +85,12 @@ function extLogin($userModel) {
     $_SESSION['username'] = $user['username'];
     $_SESSION['nombre'] = $user['nombreCompleto'];
     $_SESSION['user_role'] = $user['nombreRol'];
+    
     // Update last login
     $userModel->updateLastLogin($user['idUsuario']);
 
-    // Define route based on role
-    $routes = [
-        'administrador' => 'dashboard.php',
-        'cajero'        => 'dashboard.php',
-        'marcador'      => 'dashboard.php'
-    ];
-
-    $redirectTo = isset($routes[$user['rolId']]) ? $routes[$user['rolId']] : 'login.php';
-
     // Reply success
-    replyJson(true, 'Inicio de sesión exitoso.', ['redirect' => $redirectTo]);
+    replyJson(true, 'Inicio de sesión exitoso.', ['redirect' => 'dashboard.php']);
 }
 
 // External logout function
@@ -94,9 +98,15 @@ function extLogout() {
     // Destroy session
     session_unset();
     session_destroy();
+    
+    // Clear session cookie
+    if (isset($_COOKIE[session_name()])) {
+        setcookie(session_name(), '', time() - 3600, '/');
+    }
 
-    // Reply success
-    replyJson(true, 'Cierre de sesión exitoso.', ['redirect' => 'login.php']);
+    // Redirect to login
+    header('Location: ../views/login.php');
+    exit;
 }
 
 // JSON reply helper
@@ -109,4 +119,3 @@ function replyJson($success, $message, $data = []) {
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
-
