@@ -93,15 +93,29 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
             </ul>
 
-            <!-- Cerrar Sesión -->
-            <div class="dropdown">
-                    <li class="nav-item">
-                        <a class="nav-link text-danger" href="../controllers/authController.php" onclick="return confirm('¿Seguro que deseas cerrar sesión?')">
-                            <i class="fas fa-sign-out-alt me-2"></i>
-                            Cerrar Sesión
-                        </a>
-                    </li>
-            </div>
+            <!-- User Info & Logout -->
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-1"></i>
+                        <?php echo htmlspecialchars($usuario); ?>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                            <span class="dropdown-item-text">
+                                <small class="text-muted">Rol: <strong class="text-capitalize"><?php echo htmlspecialchars($rol); ?></strong></small>
+                            </span>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="#" onclick="cerrarSesion(event)">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Cerrar Sesión
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
 
         </div>
     </div>
@@ -109,6 +123,17 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
 <!-- Navbar Spacer -->
 <div style="height: 76px;"></div>
+
+<script>
+function cerrarSesion(event) {
+    event.preventDefault();
+    
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        window.location.href = '../controllers/authController.php?action=logout';
+    }
+}
+</script>
+
 <?php endif; ?>
 
 <main class="main-content"><?php echo "\n"; ?>
