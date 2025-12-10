@@ -50,9 +50,9 @@ include 'includes/header.php';
     <!-- Ticket Info (Hidden by default) -->
     <div class="row mb-4 d-none" id="ticket-info">
         <div class="col-12">
-            <div class="card border-0 border-start border-success border-4 shadow-sm bg-success bg-opacity-10">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
+            <div class="card border-0 border-start border-success border-4 shadow-sm">
+                <div id="print-area-entrada" class="card-body">
+                    <div class="d-flex align-items-center mb-4">
                         <div class="bg-success bg-opacity-25 rounded-circle p-2 me-3">
                             <i class="fas fa-check-circle text-success fs-3"></i>
                         </div>
@@ -61,18 +61,57 @@ include 'includes/header.php';
                             <small class="text-muted">El vehículo ha sido registrado en el sistema</small>
                         </div>
                     </div>
-                    <div class="row g-3">
+                    
+                    <div class="text-center mb-4">
+                        <h6 class="text-muted text-uppercase mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">Sistema de Parqueo</h6>
+                        <h3 class="fw-bold mb-1">TICKET DE ENTRADA</h3>
+                        <p class="text-muted mb-0" id="ticket-fecha-completa">-</p>
+                    </div>
+
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <div class="bg-white rounded p-3">
+                            <div class="bg-light rounded p-3 border">
                                 <small class="text-muted text-uppercase d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Número de Ticket</small>
                                 <h4 class="mb-0 fw-bold text-dark" id="ticket-num">-</h4>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="bg-white rounded p-3">
+                            <div class="bg-light rounded p-3 border">
                                 <small class="text-muted text-uppercase d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Hora de Entrada</small>
                                 <h4 class="mb-0 fw-bold text-dark" id="ticket-hora">-</h4>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info border-0 mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <div class="small">
+                                <strong>Tarifa:</strong> $2.00 por hora o fracción<br>
+                                <strong>Importante:</strong> Conserve este ticket para su salida
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center text-muted small">
+                        <p class="mb-1">Atendido por: <strong><?php echo htmlspecialchars($usuario); ?></strong></p>
+                        <p class="mb-0">¡Gracias por su visita!</p>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-white border-0 no-print">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button class="btn btn-primary w-100" onclick="imprimirTicketEntrada()">
+                                <i class="fas fa-print me-2"></i>
+                                Imprimir Ticket
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-secondary w-100" onclick="cerrarTicket()">
+                                <i class="fas fa-times me-2"></i>
+                                Cerrar
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -111,6 +150,27 @@ include 'includes/header.php';
 
 </div>
 
+<style>
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #print-area-entrada, #print-area-entrada * {
+        visibility: visible;
+    }
+    #print-area-entrada {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+    }
+    .no-print {
+        display: none !important;
+    }
+}
+</style>
+
 <?php
 // Scripts
 $pageScripts = "
@@ -138,6 +198,19 @@ $pageScripts = "
                             // Mostrar info del ticket
                             $('#ticket-num').text(res.data.numero);
                             $('#ticket-hora').text(res.data.hora);
+                            
+                            // Formatear fecha completa
+                            const fecha = new Date(res.data.fecha);
+                            const opciones = { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            };
+                            $('#ticket-fecha-completa').text(
+                                fecha.toLocaleDateString('es-SV', opciones) + ' - ' + res.data.hora
+                            );
+                            
                             $('#ticket-info').removeClass('d-none');
                             
                             // Recargar tabla
@@ -164,6 +237,17 @@ $pageScripts = "
             function() {}
         ).set('labels', {ok:'Sí, Generar', cancel:'Cancelar'});
     });
+
+    // Imprimir ticket de entrada
+    function imprimirTicketEntrada() {
+        window.print();
+    }
+
+    // Cerrar ticket
+    function cerrarTicket() {
+        $('#ticket-info').addClass('d-none');
+        $('html, body').animate({scrollTop: 0}, 500);
+    }
 
     // Cargar tickets activos
     function cargarTicketsActivos() {
