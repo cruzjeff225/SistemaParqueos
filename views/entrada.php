@@ -104,6 +104,7 @@ include 'includes/header.php';
         </div>
     </div>
 
+    <!--
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
@@ -131,7 +132,8 @@ include 'includes/header.php';
             </div>
         </div>
     </div>
-
+ -->
+    
 </div>
 
 <style>
