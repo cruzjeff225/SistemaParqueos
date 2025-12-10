@@ -1,5 +1,7 @@
 <?php
 require_once '../config/database.php';
+//Zona horaria server
+date_default_timezone_set('America/El_Salvador');
 
 if (session_status() == PHP_SESSION_NONE) { 
     session_start(); 
@@ -236,8 +238,10 @@ $pageScripts = "
     $('#formBuscarRapida').submit(function(e) {
         e.preventDefault();
         let digitos = $('#digitosInput').val().padStart(4, '0');
-        let fecha = '<?php echo date(\"Ymd\"); ?>';
-        buscarTicket('T-' + fecha + '-' + digitos);
+        let fecha = '" . date('Ymd') . "';
+        let numeroTicket = 'T-' + fecha + '-' + digitos;
+
+        buscarTicket(numeroTicket);
     });
 
     $('#formBuscarCompleta').submit(function(e) {
